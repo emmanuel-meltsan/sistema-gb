@@ -1,19 +1,14 @@
-version: '3.8'
-
 services:
   mysql-db:
     image: mysql:latest
-    environment:
-      MYSQL_DATABASE: gbibliotecadb
-      MYSQL_USER: root
-      MYSQL_PASSWORD: admin2025
-      MYSQL_ROOT_PASSWORD: admin2025
-    ports:
-      - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
+    environment:
+      MYSQL_DATABASE: gbibliotecadb
+      MYSQL_ROOT_PASSWORD: admin2025
+    ports:
+      - "3307:3306"
   phpmyadmin:
     depends_on:
       - mysql-db
@@ -21,13 +16,13 @@ services:
     container_name: phpmyadmin
     restart: always
     environment:
-      PMA_HOST: mysql-db          # Host del servicio MySQL
-      PMA_PORT: 3306        # Puerto de MySQL
+      PMA_HOST: mysql-db
+      PMA_PORT: 3306  # Se mantiene 3306 porque dentro del contenedor MySQL sigue usando ese puerto.
     ports:
       - "8081:80"
-
   api-sgb:
     build: .
+    restart: always
     depends_on:
       - mysql-db
     ports:
@@ -36,6 +31,5 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/gbibliotecadb
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: admin2025
-
 volumes:
   db-data:
