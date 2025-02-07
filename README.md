@@ -35,7 +35,7 @@ cd sistema-gb
 ```
 #### 1.2. Ejecutar Docker Compose
 ```
-docker-compose -p <nombre_proyecto> up --build
+docker compose -p <nombre_proyecto> up --build
 ```
 #### 1.3. Visualizar los endpoints
 
@@ -43,15 +43,15 @@ docker-compose -p <nombre_proyecto> up --build
 ```
   http://localhost:8081
 ```
-
-- **API Backend:**
-```
-  http://localhost:8080/api/books
-```
 - **Swagger:**
 ```
   http://localhost:8080/swagger-ui.html
 ```
+- **API Backend:**
+```
+  http://localhost:8080/api/books
+```
+
 - **Postman:** [Link para descargar colección de Postman](https://drive.google.com/file/d/1W06G7MgebZN3cATpImBj7DpCqYC3YK7I/view?usp=sharing)
 
 ### 2. Instalación y uso con un IDE
