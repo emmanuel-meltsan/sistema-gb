@@ -23,8 +23,9 @@ Desarrollar un microservicio para gestionar el catálogo de libros de una biblio
 ## 🚀 Instrucciones de Instalación y Uso
 
 🔗 **Navega rápidamente a la sección que necesites:**
-- [Instalación por medio de Docker Compose](#1-instalación-por-medio-de-docker-compose)
+- [Instalación por medio de Docker Compose - local ](#1-instalación-por-medio-de-docker-compose)
 - [Instalación y uso con un IDE local](#2-instalación-y-uso-con-un-ide)
+- [instalación por medio de docker hub 🐳](https://hub.docker.com/r/emmlg/emmanuel-sgb)
 
 ### 1. Instalación por medio de Docker Compose
 
