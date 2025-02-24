@@ -5,13 +5,13 @@ import com.emmlg.biblioapi.book.dto.BookDto;
 import com.emmlg.biblioapi.book.exceptions.BooksMsgAlert;
 import com.emmlg.biblioapi.book.model.Book;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.emmlg.biblioapi.book.exceptions.BooksMsgAlert.getMessageFromProperties;
 
 @Service
 @RequiredArgsConstructor
@@ -30,13 +30,17 @@ private final BookRepository bookRepository;
 public BookDto createBook(BookDto bookDto) {
 
     if (bookRepository.existsByIsbn(bookDto.getIsbn())) {
-        throw new BooksMsgAlert("El libro ya existe con el ISBN: " + bookDto.getIsbn());
+        throw new BooksMsgAlert(
+                getMessageFromProperties("error.isbnExist.code"),
+                getMessageFromProperties("error.isbn.exists", bookDto.getIsbn())
+        );
+
     }
 
-    Book newBook =convertToEntity(bookDto);
-    bookRepository.save(newBook);
+    Book newBook = convertToEntity(bookDto);
 
-    return bookDto;
+
+    return convertToDto(bookRepository.save(newBook));
 }
 
     /** READ : To-Do
@@ -47,6 +51,13 @@ public BookDto createBook(BookDto bookDto) {
     @Override
     public List<BookDto> getAllBooks() {
         List<Book> books = bookRepository.findAll();
+
+        if(books.isEmpty()) {
+            throw new BooksMsgAlert(
+                    getMessageFromProperties("error.books.code"),
+                    "no hay libros Disponibles todavia"
+            );
+        }
         List<BookDto> bookDtos = new ArrayList<>();
         for (Book b : books.reversed()) {
             BookDto bdto = convertToDto(b);
@@ -58,9 +69,16 @@ public BookDto createBook(BookDto bookDto) {
 
 @Override
 public Page<BookDto> getAllBooks(Pageable pageable) {
+
     Page<Book> books = bookRepository.findAll(pageable);
+    System.out.println("----");
+    System.out.println(pageable);
+    System.out.println("---");
+    System.out.println(books.toString());
     if (books.getTotalElements() == 0) {
-        throw new BooksMsgAlert("Libros no encontrados");
+        throw new BooksMsgAlert(
+                "error.books.code",
+                "Libros no encontrados");
     }
     List<BookDto> bookDtos = new ArrayList<>();
     for (Book b : books.getContent()) {
@@ -69,14 +87,27 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
     }
     //  Page<BookDto> bookDtoPage = new PageImpl<>(bookDtos, pageable,books.getTotalElements());
 
-    return new PageImpl<>(bookDtos, pageable, books.getTotalElements());
+    return new PageImpl<>(bookDtos, pageable,books.getTotalElements());
 }
 
     public List<BookDto> getBookByAuthor(String author){
 
+        author = author.trim();
+        if( author.trim().isEmpty()){
+            throw new BooksMsgAlert(
+                    getMessageFromProperties("book.author.notblank"),
+                    "EL autor debe de tener entre 3 caracteres hasta 255"
+
+                    );
+        }
      List<Book> booksfromauthor = bookRepository.getBooksByAuthorContainingIgnoreCase(author);
      if(booksfromauthor.isEmpty()){
-         throw new BooksMsgAlert("no hay libros con ese author");
+         throw new BooksMsgAlert(
+                 getMessageFromProperties("error.author.code"),
+                 getMessageFromProperties("error.author.notfound" ,author)
+
+         );
+
      }
         List<BookDto> bookDtos = new ArrayList<>();
         for (Book b : booksfromauthor) {
@@ -88,10 +119,23 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
 
     return bookDtos;
     }
+
     public List<BookDto> getBookByTitle(String title){
-    List<Book> booksfromTitle = bookRepository.getBooksByTitleContainingIgnoreCase(title);
+
+        title = title.trim();
+
+        if( title.trim().isEmpty()){
+            throw new BooksMsgAlert(
+                    "Titulo Vacio",
+                    "El titulo no debe de estar Vacio"
+            );
+        }
+        List<Book> booksfromTitle = bookRepository.getBooksByTitleContainingIgnoreCase(title);
     if(booksfromTitle.isEmpty()){
-        throw new BooksMsgAlert("No hay libros con ese titulo");
+        throw new BooksMsgAlert(
+                getMessageFromProperties("error.title.code"),
+                getMessageFromProperties("error.title.notfound",title)
+        );
     }
     List<BookDto> bookDtos = new ArrayList<>();
     for (Book b : booksfromTitle) {
@@ -103,9 +147,18 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
     }
 
     @Override
-    public BookDto getBookById(long idBook) {
+    public BookDto getBookById(Long idBook) {
+        if(idBook.longValue()> Long.MAX_VALUE){
+            throw new BooksMsgAlert(
+                    "error.bookid.code",
+                    "El numero es muy largo"
+            );
+        }
     Book book = bookRepository.findById(idBook).
-            orElseThrow(()-> new BooksMsgAlert("El libro no existe con el ID: " + idBook));
+            orElseThrow(()-> new BooksMsgAlert(
+                    getMessageFromProperties("error.bookid.code"),
+                    getMessageFromProperties("error.bookid.notfound",idBook)
+            ));
     return convertToDto(book);
     }
 
@@ -117,10 +170,14 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
  *
  */
     @Override
-    public BookDto updateBook(BookDto bookDto, long idBook) {
+    public BookDto updateBook(BookDto bookDto, Long idBook) {
         Book newBook = bookRepository.findById(idBook).
-                orElseThrow(()-> new BooksMsgAlert("El libro no existe con el ID: " +idBook));
+                orElseThrow(()-> new BooksMsgAlert(
+                        getMessageFromProperties("error.bookid.code"),
+                        getMessageFromProperties("error.bookid.notfound",idBook)
+                ));
 
+        newBook.setIdBook(idBook);
         newBook.setTitle(bookDto.getTitle());
         newBook.setAuthor(bookDto.getAuthor());
         newBook.setIsbn(bookDto.getIsbn());
@@ -133,14 +190,19 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
     }
 
     @Override
-    public void deleteBook(long idBook) {
+    public void deleteBook(Long idBook) {
     Book nbook = bookRepository.findById(idBook).
-        orElseThrow(()-> new BooksMsgAlert("Libro no existe con el ID: " + idBook));
+        orElseThrow(()-> new BooksMsgAlert(
+
+                getMessageFromProperties("error.bookid.code"),
+          "Error al eliminar"+getMessageFromProperties("error.bookid.notfound",idBook)
+                ));
     bookRepository.delete(nbook);
     }
 
     private BookDto convertToDto(Book book) {
         BookDto bdto = new BookDto();
+        bdto.setId(book.getIdBook());// check
         bdto.setIsbn(book.getIsbn());
         bdto.setTitle(book.getTitle());
         bdto.setAuthor(book.getAuthor());
@@ -153,6 +215,7 @@ public Page<BookDto> getAllBooks(Pageable pageable) {
     private Book convertToEntity(BookDto bookDto) {
         Book book = new Book();
 
+        book.setIdBook(bookDto.getId());
         book.setIsbn(bookDto.getIsbn());
         book.setTitle(bookDto.getTitle());
         book.setAuthor(bookDto.getAuthor());

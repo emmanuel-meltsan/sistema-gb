@@ -13,8 +13,8 @@ public interface IBookService {
     Page<BookDto> getAllBooks(Pageable pageable);
     List<BookDto> getBookByAuthor(String author);
     List<BookDto> getBookByTitle(String title);
-    BookDto getBookById(long idBook);
-    BookDto updateBook(BookDto bookDto,long idBook);
-    void deleteBook(long idBook);
+    BookDto getBookById(Long idBook);
+    BookDto updateBook(BookDto bookDto,Long idBook);
+    void deleteBook(Long idBook);
 
 }
